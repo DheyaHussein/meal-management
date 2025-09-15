@@ -1,0 +1,64 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "prompt",
+ "creation": "2025-09-11 01:49:53.839633",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "meal_to_produce",
+  "number_of_people",
+  "from_warehouse",
+  "required_ingredients"
+ ],
+ "fields": [
+  {
+   "fieldname": "meal_to_produce",
+   "fieldtype": "Link",
+   "label": "Meal to produce",
+   "options": "Meal Recipe"
+  },
+  {
+   "fieldname": "number_of_people",
+   "fieldtype": "Int",
+   "label": "Number of people"
+  },
+  {
+   "fieldname": "required_ingredients",
+   "fieldtype": "Table",
+   "label": "Required Ingredients",
+   "options": "Meal Production Calculator Ingredient"
+  },
+  {
+   "fieldname": "from_warehouse",
+   "fieldtype": "Link",
+   "label": "Warehouse",
+   "options": "Warehouse"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-09-11 04:04:03.403631",
+ "modified_by": "Administrator",
+ "module": "Meal Management",
+ "name": "Meal Production Calculator",
+ "naming_rule": "Set by user",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

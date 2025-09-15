@@ -1,0 +1,50 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-08-17 05:01:11.842480",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "date",
+  "meal_type",
+  "meal",
+  "people"
+ ],
+ "fields": [
+  {
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "label": "Date"
+  },
+  {
+   "fieldname": "meal_type",
+   "fieldtype": "Select",
+   "label": "Meal Type",
+   "options": "Breakfast\nLunch\nDanner"
+  },
+  {
+   "fieldname": "meal",
+   "fieldtype": "Link",
+   "label": "Meal",
+   "options": "Meal Recipe"
+  },
+  {
+   "fieldname": "people",
+   "fieldtype": "Int",
+   "label": "People"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2025-08-17 17:15:55.090698",
+ "modified_by": "Administrator",
+ "module": "Meal Management",
+ "name": "Meal Schedule Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}
