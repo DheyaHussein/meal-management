@@ -9,6 +9,7 @@
   "meal_to_produce",
   "number_of_people",
   "from_warehouse",
+  "num_week",
   "required_ingredients"
  ],
  "fields": [
@@ -34,11 +35,17 @@
    "fieldtype": "Link",
    "label": "Warehouse",
    "options": "Warehouse"
+  },
+  {
+   "default": "1",
+   "fieldname": "num_week",
+   "fieldtype": "Int",
+   "label": "Number of meals in the week"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-09-11 04:04:03.403631",
+ "modified": "2025-10-07 03:53:26.242054",
  "modified_by": "Administrator",
  "module": "Meal Management",
  "name": "Meal Production Calculator",
