@@ -53,7 +53,7 @@ from erpnext.stock.get_item_details import get_item_details
 
 
 @frappe.whitelist()
-def calculate_ingredients_for_meal(meal_name, people=1):
+def calculate_ingredients_for_meal(meal_name, people=1, num_of_meals=1):
     """
     Return aggregated list of {item_code, qty, uom} for a meal and people count.
     """
@@ -61,6 +61,8 @@ def calculate_ingredients_for_meal(meal_name, people=1):
         return []
 
     meal = frappe.get_doc("Meal Recipe", meal_name)
+    
+    
     summary = {}
 
     for ing in meal.ingredients:
@@ -70,7 +72,10 @@ def calculate_ingredients_for_meal(meal_name, people=1):
            for 3 days and people is 10 so we should multiply by 3*10* qty_per_person
            """
         # 
-        qty = (ing.qty_per_person or 0) * int(people) * ing.num_weeks
+        qty = (ing.qty_per_person or 0) * int(people) * int(num_of_meals)
+        print(num_of_meals)
+        qty = float(qty/ing.convert_uom)
+        print(qty)
         key = ing.item_code
         # We should deivide by the conversion factor to get stock UOM qty
         # for example if the uom is "كيس*40"  so we divide by 40000 to cunvert from grams to bags
@@ -78,63 +83,7 @@ def calculate_ingredients_for_meal(meal_name, people=1):
         # we can add a list of known uoms that need conversion
         #     qty = qty / float(ing.uom.split("*")[-1])
         known_uoms = {"كيس*40": 40000, "كيس*50": 50, "راس": 10}
-        items = [
-                "كيس رز*40",
-                "دجاج مثلج ابو700*10",
-                "لحم ثور تبيع وزن 110 كيلو",
-                "فاصوليا حمراء *50كيلو",
-                "فاصولياء سبعه نجوم علب*24",
-                "بزالياء علب *24",
-                "فول صيني *24",
-                "عدس *15ك",
-                "فول *25 كيلو",
-                "جبن مالح15كيلو",
-                "تنك حلوى 13 كيلو",
-                "جبن مثلث12*24",
-                "بيض*12*30",
-                "قشطة*48",
-                "عسل *48",
-                "زيت 20لتر",
-                "صلصه * 12 علبة *350 جرام",
-                "ملح *20 ك",
-                "كمون مطحون ×25 ك",
-                "كبزرة حبوب *10 ك",
-                "بسباس حيمي *25 ك",
-                "فلفل حبوب ×25كيلو",
-                "هرد*25ك ؤ",
-                "قرفة *10 ك",
-                "قرنفل*5 ك",
-                "هيل *5 ك",
-                "مجموع بهارات *20باكت",
-                "كاري *36 باكت",
-                "موتو 1×2*40باكت",
-                "ليم مجفف *10",
-                "رول تغليف",
-                "قصدير*6",
-                "خل ابيض *12",
-                "بسباس عدني*70 ك",
-                "صفار البيض*80",
-                "صفار الزعفران",
-                "صفار البرتقال",
-                "دقن الشيبه",
-                "صبغة رز حمرا ×100",
-                "عصير منوع*24 حبه",
-                "عصير اوليفر منوع* 27 حبه",
-                "حليب بقري صغير*28",
-                "بسكويت سمايلي 60 حبه",
-                "بسكويت ابو ولد",
-                "كيك*144",
-                "بيبسي منوع*30",
-                "طماط 20ك",
-                "بطاط 22ك",
-                "جزر 10ك",
-                "كوسة 15ك",
-                "بسباس 21 كيلو",
-                "سوادي 8ك",
-                "بيبار 8ك",
-                "بصل 20ك",
-                "ثوم 9ك"
-            ]
+
         
         # if ing.item_code in items:
         #     qty = qty / 1000  # convert grams to kilos for these items only
@@ -154,7 +103,7 @@ def calculate_ingredients_for_meal(meal_name, people=1):
 
 
 @frappe.whitelist()
-def create_stock_entry_from_calculator(calc_name, from_warehouse=None):
+def create_stock_entry_from_calculator(calc_name, from_warehouse=None, custom_issue=None):
     """
     Create a Stock Entry (Material Issue) from a saved Meal Production Calculator doc.
     This version is defensive: it works even if the calculator doc doesn't have a `company`
@@ -272,6 +221,8 @@ def create_stock_entry_from_calculator(calc_name, from_warehouse=None):
     se = frappe.new_doc("Stock Entry")
     se.stock_entry_type = "Material Issue"
     # se.naming_series = "MAT-ISS-.YYYY.-"
+    se.custom_issue_to = custom_issue or None
+    print(custom_issue)
     se.company = company
     se.set_posting_time = 1
 

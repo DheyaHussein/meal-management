@@ -8,7 +8,8 @@
  "field_order": [
   "item_code",
   "qty_per_person",
-  "uom"
+  "uom",
+  "convert_uom"
  ],
  "fields": [
   {
@@ -27,12 +28,17 @@
    "fieldtype": "Link",
    "label": "Item",
    "options": "Item"
+  },
+  {
+   "fieldname": "convert_uom",
+   "fieldtype": "Float",
+   "label": "Convert UOM"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-08-17 19:35:26.459207",
+ "modified": "2025-10-19 00:38:15.725566",
  "modified_by": "Administrator",
  "module": "Meal Management",
  "name": "Meal Recipe Item",
