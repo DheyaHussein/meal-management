@@ -245,3 +245,5 @@ app_license = "mit"
 # 	"Logging DocType Name": 30  # days to retain logs
 # }
 
+fixtures = [{"doctype": "Custom Field", "filters": [{"module": "meal management"}]}, "Translation", ]
+
