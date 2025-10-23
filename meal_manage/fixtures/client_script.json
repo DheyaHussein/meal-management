@@ -1,0 +1,178 @@
+[
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Stock Ledger Entry",
+  "enabled": 1,
+  "modified": "2025-01-20 01:19:23.517336",
+  "module": "Stock",
+  "name": "Item reorder level",
+  "script": "frappe.ui.form.on('Stock Ledger Entry', {\n\trefresh(frm) {\n\t\t// your code her\n\t\tif (frm.doc.actual_qty <= (frm.doc.reorder_level * 0.1)) {  // Example: 20% threshold\n            frappe.msgprint({\n                title: __('Low Stock Alert'),\n                indicator: 'red',\n                message: `Stock for ${frm.doc.item_code} has reached 20% of its reorder level.`\n            });\n        }\n\t}\n});",
+  "view": "Form"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Stock Entry",
+  "enabled": 1,
+  "modified": "2025-02-24 10:29:01.080430",
+  "module": null,
+  "name": "Custom Script",
+  "script": "frappe.ui.form.on('Stock Entry', {\r\n    stock_entry_type: function (frm) {\r\n        const condition = frm.doc.stock_entry_type === 'Material Issue' || frm.doc.stock_entry_type === 'Damaged Material Receipt';\r\n        frm.toggle_display('custom_beneficiary_party', condition);\r\n        frm.set_df_property('beneficiary', 'reqd', condition);\r\n    },\r\n    \r\n    from_warehouse: function (frm) {\r\n        const condition = frm.doc.stock_entry_type === 'Material Issue' || frm.doc.stock_entry_type === 'Damaged Material Receipt';\r\n        frm.toggle_display('custom_beneficiary_party', condition);\r\n        frm.set_df_property('custom_beneficiary_party', 'reqd', condition);\r\n    },\r\n    refresh: function (frm) {\r\n        const condition = frm.doc.stock_entry_type === 'Material Issue' || frm.doc.stock_entry_type === 'Damaged Material Receipt';\r\n        frm.toggle_display('custom_beneficiary_party', condition);\r\n        frm.set_df_property('custom_beneficiary_party', 'reqd', condition);\r\n    }\r\n});\r\n",
+  "view": "Form"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Stock Entry",
+  "enabled": 0,
+  "modified": "2025-09-05 03:01:16.936885",
+  "module": null,
+  "name": "Item is lass",
+  "script": "frappe.ui.form.on('Stock Entry', {\r\n    validate: function (frm) {\r\n        frm.doc.items.forEach(item => {\r\n            if (item.item_code) {\r\n                // Fetch the actual stock level for the selected item\r\n                frappe.call({\r\n                    method: 'frappe.client.get',\r\n                    args: {\r\n                        doctype: 'Bin',\r\n                        filters: {\r\n                            item_code: item.item_code,\r\n                            warehouse: item.s_warehouse || item.t_warehouse\r\n                        }\r\n                    },\r\n                    callback: function (response) {\r\n                        if (response.message) {\r\n                            const current_stock = response.message.actual_qty || 0;\r\n                            const ten_percent_stock = current_stock * 0.10;\r\n\r\n                            // Check if the entered quantity is below 10% of total stock\r\n                            if (item.qty <= ten_percent_stock) {\r\n                                frappe.msgprint({\r\n                                    title: __('Low Stock Warning'),\r\n                                    indicator: 'orange',\r\n                                    message: __(\r\n                                        `The quantity for item <b>${item.item_code}</b> is less than 10% of the available stock (${current_stock}). Please request more.`\r\n                                    )\r\n                                });\r\n                            }\r\n                        }\r\n                    }\r\n                });\r\n            }\r\n        });\r\n    }\r\n});\r\n",
+  "view": "Form"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Bin",
+  "enabled": 0,
+  "modified": "2025-02-10 05:43:31.643162",
+  "module": "Stock",
+  "name": "Custom Report Script",
+  "script": "frappe.query_reports[\"Stock Projected Qty\"] = {\r\n    \"formatter\": function(value, row, column, data, default_formatter) {\r\n        if (column.fieldname === \"projected_qty\" || column.fieldname === \"actual_qty\") {\r\n            value = parseInt(value);  // Convert float to integer\r\n        }\r\n        return default_formatter(value, row, column, data);\r\n    }\r\n};\r\n",
+  "view": "Form"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Stock Entry",
+  "enabled": 1,
+  "modified": "2025-08-13 05:47:40.766784",
+  "module": "Custome App",
+  "name": "Quantity in Words",
+  "script": "frappe.ui.form.on(\"Stock Entry\", {\r\n    validate: function(frm) {\r\n        frm.doc.items.forEach(function(row) {\r\n            if (row.qty) {\r\n                let qty = parseFloat(row.qty); // Ensure number, handle decimal\r\n                if (!isNaN(qty)) {\r\n                    frappe.call({\r\n                        method: \"custome_app.utils.convert_number_to_words\",\r\n                        args: {\r\n                            number: qty,  // This will now handle 7.5 correctly\r\n                            lang: \"ar\"\r\n                        },\r\n                        callback: function(response) {\r\n                            frappe.model.set_value(row.doctype, row.name, \"qty_in_words\", response.message);\r\n                        }\r\n                    });\r\n                }\r\n            }\r\n        });\r\n    }\r\n});\r\n",
+  "view": "Form"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Purchase Receipt",
+  "enabled": 1,
+  "modified": "2025-02-24 01:38:20.642519",
+  "module": "Custome App",
+  "name": "Quantity in Word for Purchase Receipt",
+  "script": "frappe.ui.form.on(\"Purchase Receipt\", {\r\n    validate: function(frm) {\r\n        frm.doc.items.forEach(function(row) {\r\n            if (row.received_qty) {\r\n                // Convert quantity to words in English\r\n                // frappe.call({\r\n                //     method: \"your_custom_app.utils.convert_number_to_words\",\r\n                //     args: {\r\n                //         number: row.qty,\r\n                //         lang: \"en\"\r\n                //     },\r\n                //     callback: function(response) {\r\n                //         frappe.model.set_value(row.doctype, row.name, \"qty_in_words\", response.message);\r\n                //     }\r\n                // });\r\n\r\n                // Convert quantity to words in Arabic\r\n                frappe.call({\r\n                    method: \"custome_app.utils.convert_number_to_words\",\r\n                    args: {\r\n                        number: row.received_qty,\r\n                        lang: \"ar\"\r\n                    },\r\n                    callback: function(response) {\r\n                        frappe.model.set_value(row.doctype, row.name, \"custom_quantity_in_words\", response.message);\r\n                    }\r\n                });\r\n            }\r\n        });\r\n    }\r\n});",
+  "view": "Form"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Stock Entry",
+  "enabled": 1,
+  "modified": "2025-02-24 05:03:05.062934",
+  "module": "Custome App",
+  "name": "`Requires Damaged Receipt",
+  "script": "frappe.ui.form.on(\"Stock Entry\", {\r\n    item_code: function(frm, cdt, cdn) {\r\n        let row = locals[cdt][cdn];\r\n\r\n        // Fetch the 'Requires Damaged Receipt' field from Item Doctype\r\n        frappe.db.get_value(\"Item\", row.item_code, \"requires_damaged_receipt\", (r) => {\r\n            if (r.requires_damaged_receipt) {\r\n                // Check available stock in Damaged Warehouse\r\n                frappe.call({\r\n                    method: \"frappe.client.get_value\",\r\n                    args: {\r\n                        doctype: \"Bin\",\r\n                        filters: {\r\n                            item_code: row.item_code,\r\n                            warehouse: \"Damaged Items Warehouse - اا\"\r\n                        },\r\n                        fieldname: \"actual_qty\"\r\n                    },\r\n                    callback: function(response) {\r\n                        let damaged_qty = response.message ? response.message.actual_qty : 0;\r\n\r\n                        if (row.qty > damaged_qty) {\r\n                            frappe.msgprint({\r\n                                title: __(\"Insufficient Damaged Stock\"),\r\n                                message: __(`Cannot issue item <b>${row.item_code}</b> because only <b>${damaged_qty}</b> is available in 'Damaged Items Warehouse'.<br>\r\n                                You need to receive at least <b>${row.qty - damaged_qty}</b> as 'Damaged Material' before proceeding.`),\r\n                                indicator: \"red\"\r\n                            });\r\n\r\n                            // Clear the row to prevent incorrect selection\r\n                            frappe.model.set_value(cdt, cdn, \"item_code\", \"\");\r\n                        }\r\n                    }\r\n                });\r\n            }\r\n        });\r\n    }\r\n});\r\n",
+  "view": "Form"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Stock Entry",
+  "enabled": 1,
+  "modified": "2025-02-26 23:28:44.224975",
+  "module": "Custome App",
+  "name": "Supply Party",
+  "script": "frappe.ui.form.on('Stock Entry', {\r\n    stock_entry_type: function (frm) {\r\n        const condition = frm.doc.stock_entry_type === 'Material Receipt';\r\n        frm.toggle_display('custom_supply_party', condition);\r\n        frm.set_df_property('supply party', 'reqd', condition);\r\n    },\r\n    \r\n    from_warehouse: function (frm) {\r\n        const condition = frm.doc.stock_entry_type === 'Material Receipt';\r\n        frm.toggle_display('custom_supply_party', condition);\r\n        frm.set_df_property('custom_supply_party', 'reqd', condition);\r\n    },\r\n    refresh: function (frm) {\r\n        const condition = frm.doc.stock_entry_type === 'Material Receipt';\r\n        frm.toggle_display('custom_supply_party', condition);\r\n        frm.set_df_property('custom_supply_party', 'reqd', condition);\r\n    }\r\n});\r\n",
+  "view": "Form"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Stock Entry",
+  "enabled": 1,
+  "modified": "2025-02-26 23:39:28.114608",
+  "module": "Custome App",
+  "name": "Received Info",
+  "script": "frappe.ui.form.on('Stock Entry', {\r\n    stock_entry_type: function (frm) {\r\n        const condition = frm.doc.stock_entry_type === 'Material Issue';\r\n        frm.toggle_display('custom_received_name', condition);\r\n        frm.set_df_property('Received Name', 'reqd', condition);\r\n        \r\n        frm.toggle_display('custom_work_type_', condition);\r\n        frm.set_df_property('Work Type', 'reqd', condition);\r\n    },\r\n    \r\n    from_warehouse: function (frm) {\r\n        const condition = frm.doc.stock_entry_type === 'Material Issue';\r\n        frm.toggle_display('custom_received_name', condition);\r\n        frm.set_df_property('custom_received_name', 'reqd', condition);\r\n        \r\n        frm.toggle_display('custom_work_type_', condition);\r\n        frm.set_df_property('custom_work_type_', 'reqd', condition);\r\n    },\r\n    refresh: function (frm) {\r\n        const condition = frm.doc.stock_entry_type === 'Material Issue';\r\n        frm.toggle_display('custom_received_name', condition);\r\n        frm.set_df_property('custom_received_name', 'reqd', condition);\r\n        \r\n        frm.toggle_display('custom_work_type_', condition);\r\n        frm.set_df_property('custom_work_type_', 'reqd', condition);\r\n    }\r\n});\r\n",
+  "view": "Form"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Stock Entry",
+  "enabled": 0,
+  "modified": "2025-03-03 01:58:20.342243",
+  "module": "Custome App",
+  "name": "Synchronize Data",
+  "script": "frappe.ui.form.on(\"Stock Entry\", {\r\n    refresh: function (frm) {\r\n        frm.add_custom_button(__('Synchronize Data'), function () {\r\n            let file_input = $('<input type=\"file\" accept=\".sql\">');\r\n            file_input.trigger('click');\r\n\r\n            file_input.on('change', function () {\r\n                let file = file_input[0].files[0];\r\n                if (file) {\r\n                    let reader = new FileReader();\r\n                    reader.readAsText(file);\r\n                    reader.onload = function (e) {\r\n                        frappe.call({\r\n                            method: \"custom_app.sync_data.restore_backup\",\r\n                            args: {\r\n                                sql_content: e.target.result\r\n                            },\r\n                            callback: function (response) {\r\n                                if (response.message === \"success\") {\r\n                                    frappe.msgprint(\"Data synchronized successfully.\");\r\n                                } else {\r\n                                    frappe.msgprint(\"Error during synchronization.\");\r\n                                }\r\n                            }\r\n                        });\r\n                    };\r\n                }\r\n            });\r\n        }).addClass(\"btn-primary\");\r\n    }\r\n});\r\n",
+  "view": "Form"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Meal Schedule",
+  "enabled": 1,
+  "modified": "2025-08-17 20:10:15.564240",
+  "module": "Meal Management",
+  "name": "Meal Schedule",
+  "script": "frappe.ui.form.on('Meal Schedule', {\r\n    refresh(frm) {\r\n        frm.add_custom_button('Calculate Ingredients', function() {\r\n            frappe.call({\r\n                method: 'meal_manage.api.get_ingredients_from_schedule',\r\n                args: { schedule: frm.doc.name },\r\n                callback: function(r) {\r\n                    if (r.message) {\r\n                        let msg = '<b>Required Ingredients:</b><br>';\r\n                        r.message.forEach(i => {\r\n                            msg += `${i.item_code}: ${i.qty} ${i.uom}<br>`;\r\n                        });\r\n                        frappe.msgprint(msg);\r\n                    }\r\n                }\r\n            });\r\n        });\r\n    }\r\n});\r\n",
+  "view": "Form"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Meal Schedule",
+  "enabled": 1,
+  "modified": "2025-08-17 18:49:36.584912",
+  "module": "Meal Management",
+  "name": "Meal schedule be date",
+  "script": "frappe.ui.form.on('Meal Schedule', {\r\n    schedule_type(frm) {\r\n        if (frm.doc.schedule_type === \"Daily\" && frm.doc.start_date) {\r\n            frm.set_value('end_date', frm.doc.start_date);\r\n        }\r\n        if (frm.doc.schedule_type === \"Weekly\" && frm.doc.start_date) {\r\n            let start = frappe.datetime.str_to_obj(frm.doc.start_date);\r\n            let end = frappe.datetime.add_days(start, 6);\r\n            frm.set_value('end_date', frappe.datetime.obj_to_str(end));\r\n        }\r\n    },\r\n    start_date(frm) {\r\n        if (frm.doc.schedule_type === \"Daily\") {\r\n            frm.set_value('end_date', frm.doc.start_date);\r\n        }\r\n        if (frm.doc.schedule_type === \"Weekly\") {\r\n            let start = frappe.datetime.str_to_obj(frm.doc.start_date);\r\n            let end = frappe.datetime.add_days(start, 6);\r\n            frm.set_value('end_date', frappe.datetime.obj_to_str(end));\r\n        }\r\n    }\r\n});\r\n",
+  "view": "Form"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Stock Entry",
+  "enabled": 1,
+  "modified": "2025-08-17 20:05:23.945526",
+  "module": "Meal Management",
+  "name": "Fetch from Meal Schedule",
+  "script": "frappe.ui.form.on('Stock Entry', {\r\n    refresh(frm) {\r\n        frm.add_custom_button('Fetch from Meal Schedule', function() {\r\n            frappe.prompt([\r\n                {\r\n                    'fieldname': 'meal_schedule',\r\n                    'fieldtype': 'Link',\r\n                    'label': 'Meal Schedule',\r\n                    'options': 'Meal Schedule',\r\n                    'reqd': 1\r\n                }\r\n            ],\r\n            function(values){\r\n                frappe.call({\r\n                    method: 'meal_manage.api.get_ingredients_from_schedule',\r\n                    args: { schedule: values.meal_schedule },\r\n                    callback: function(r) {\r\n                        if (r.message) {\r\n                            frm.clear_table('items');  // clear existing rows\r\n                            r.message.forEach(i => {\r\n                                let row = frm.add_child('items');\r\n                                row.item_code = i.item_code;  // ✅ exact match\r\n                                row.qty = i.qty;\r\n                                row.uom = i.uom;\r\n                            });\r\n                            frm.refresh_field('items');\r\n                        }\r\n                    }\r\n                })\r\n            }, 'Select Meal Schedule');\r\n        });\r\n    }\r\n});\r\n",
+  "view": "Form"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Meal Recipe",
+  "enabled": 1,
+  "modified": "2025-08-19 01:21:07.622259",
+  "module": "Meal Management",
+  "name": "UOM auto in recipe adding",
+  "script": "frappe.ui.form.on('Meal Recipe', {\r\n    item_code: function(frm, cdt, cdn) {\r\n        let row = frappe.get_doc(cdt, cdn);\r\n        if (row.item_code) {\r\n            frappe.db.get_value(\"Item\", row.item_code, \"stock_uom\", function(value) {\r\n                if (value && value.stock_uom) {\r\n                    frappe.model.set_value(cdt, cdn, \"uom\", value.stock_uom);\r\n                }\r\n            });\r\n        }\r\n    }\r\n});\r\n\r\n\r\nfrappe.ui.form.on('Meal Recipe Item', {\r\n    item_code: function(frm, cdt, cdn) {\r\n        let row = frappe.get_doc(cdt, cdn);\r\n        if (row.item_code) {\r\n            frappe.db.get_value(\"Item\", row.item_code, \"stock_uom\", function(value) {\r\n                if (value && value.stock_uom) {\r\n                    frappe.model.set_value(cdt, cdn, \"uom\", value.stock_uom);\r\n                }\r\n            });\r\n        }\r\n    }\r\n});\r\n",
+  "view": "Form"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Stock Entry",
+  "enabled": 1,
+  "modified": "2025-09-05 07:00:42.151893",
+  "module": "Meal Management",
+  "name": "Calculate Ingredients",
+  "script": "// frappe.ui.form.on('Stock Entry', {\r\n//     refresh(frm) {\r\n//         // Add button for manual calculation\r\n//         frm.add_custom_button('Calculate Ingredients', function() {\r\n//             calculate_ingredients(frm);\r\n//         });\r\n//     }\r\n// });\r\n\r\n// // Watch the child table \"Stock Entry Meal\"\r\n// frappe.ui.form.on('Stock Entry Meal', {\r\n//     people(frm, cdt, cdn) {\r\n//         // Auto calculate when \"People\" changes\r\n//         if (!frm.is_dirty()) {\r\n//             calculate_ingredients(frm);\r\n//         }\r\n//     },\r\n//     meal(frm, cdt, cdn) {\r\n//         // Also auto calculate when \"Meal\" changes\r\n//         if (!frm.is_dirty()) {\r\n//             calculate_ingredients(frm);\r\n//         }\r\n//     }\r\n// });\r\n\r\n// function calculate_ingredients(frm) {\r\n//     function run_calculation() {\r\n//         frappe.call({\r\n//             method: 'meal_manage.api.calculate_stock_entry_meals',\r\n//             args: { stock_entry: frm.doc.name },\r\n//             callback: function(r) {\r\n//                 if (r.message) {\r\n//                     frm.clear_table('items');\r\n//                     r.message.forEach(i => {\r\n//                         let row = frm.add_child('items');\r\n//                         row.item_code = i.item_code;\r\n//                         row.qty = i.qty;\r\n//                         row.uom = i.uom;\r\n\r\n//                         // fetch default warehouse from Item\r\n//                         frappe.db.get_value(\"Item Default\", {\"parent\": i.item_code}, \"default_warehouse\")\r\n//                             .then(value => {\r\n//                                 if (value && value.message.default_warehouse) {\r\n//                                     frappe.model.set_value(row.doctype, row.name, \"s_warehouse\", value.message.default_warehouse);\r\n//                                 }\r\n//                             });\r\n//                     });\r\n//                     frm.refresh_field('items');\r\n//                 }\r\n//             }\r\n//         });\r\n//     }\r\n\r\n//     // if the doc is new or unsaved, save first\r\n//     if (frm.is_dirty()) {\r\n        \r\n//             run_calculation();\r\n//     } else {\r\n//         run_calculation();\r\n//     }\r\n// }\r\n\r\n\r\n// frappe.ui.form.on('Stock Entry', {\r\n//     refresh(frm) {\r\n//         frm.add_custom_button('Calculate Ingredients', function() {\r\n//             frappe.call({\r\n//                 method: 'meal_manage.api.calculate_stock_entry_meals',\r\n//                 args: { stock_entry: frm.doc.name },\r\n//                 callback: function(r) {\r\n//                     if (r.message) {\r\n//                         // frm.clear_table('items');\r\n//                         r.message.forEach(i => {\r\n//                             let row = frm.add_child('items');\r\n//                             row.item_code = i.item_code;\r\n//                             row.qty = i.qty;\r\n//                             row.uom = i.uom;\r\n//                         });\r\n//                         frm.refresh_field('items');\r\n//                     }\r\n//                 }\r\n//             })\r\n//         });\r\n//     }\r\n// });\r\n\r\nfrappe.ui.form.on('Stock Entry', {\r\n    refresh(frm) {\r\n        frm.add_custom_button('Calculate Ingredients', function() {\r\n            calculate_ingredients(frm);\r\n        });\r\n    }\r\n});\r\n\r\nfunction calculate_ingredients(frm) {\r\n    function run_calculation() {\r\n        frappe.call({\r\n            method: 'meal_manage.api.calculate_stock_entry_meals',\r\n            args: { stock_entry: frm.doc.name },\r\n            callback: function(r) {\r\n                if (r.message) {\r\n                    frm.clear_table('items');\r\n                    r.message.forEach(i => {\r\n                        frm.add_child(\"items\", i);  // now contains full row data\r\n                    });\r\n                    frm.refresh_field(\"items\");\r\n                }\r\n            }\r\n        });\r\n    }\r\n\r\n    if (frm.is_dirty()) {\r\n        frm.save().then(() => run_calculation());\r\n    } else {\r\n        run_calculation();\r\n    }\r\n}\r\n",
+  "view": "Form"
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Client Script",
+  "dt": "Meal Production Calculator",
+  "enabled": 1,
+  "modified": "2025-10-19 02:40:30.996873",
+  "module": "Meal Management",
+  "name": "Meal Production Calculator",
+  "script": "frappe.ui.form.on('Meal Production Calculator', {\r\n    refresh(frm) {\r\n        frm.add_custom_button(__('Calculate Ingredients'), () => calculateIngredients(frm));\r\n        frm.add_custom_button(__('Create Material Issue'), () => createMaterialIssue(frm));\r\n    }\r\n});\r\n\r\n// Calculate Ingredients button\r\nfunction calculateIngredients(frm) {\r\n    if (!frm.doc.meal_to_produce || !frm.doc.number_of_people) {\r\n        frappe.msgprint(__('Please select a Meal and enter Number of People.'));\r\n        return;\r\n    }\r\n\r\n    // call backend calculation (could also use frappe.client.get on Meal Recipe)\r\n    frappe.call({\r\n        method: 'meal_manage.api.calculate_ingredients_for_meal',\r\n        args: {\r\n            meal_name: frm.doc.meal_to_produce,\r\n            people: frm.doc.number_of_people,\r\n            num_of_meals: frm.doc.num_week\r\n        },\r\n        callback: function(r) {\r\n            if (r.message) {\r\n                // clear and fill required_ingredients child table\r\n                frm.clear_table('required_ingredients');\r\n                r.message.forEach(i => {\r\n                    let row = frm.add_child('required_ingredients');\r\n                    row.item_code = i.item_code;\r\n                    row.uom = i.uom;\r\n                    // store both per-person (optional) and total\r\n                    row.qty_per_person = null;\r\n                    row.quantity = i.qty;\r\n                });\r\n                frm.refresh_field('required_ingredients');\r\n                frappe.msgprint(__('Ingredient calculation complete.'));\r\n            } else {\r\n                frappe.msgprint(__('No ingredients found.'));\r\n            }\r\n        }\r\n    });\r\n}\r\n\r\n// Create Material Issue button\r\nfunction createMaterialIssue(frm) {\r\n    if (!frm.doc.required_ingredients || frm.doc.required_ingredients.length === 0) {\r\n        frappe.msgprint(__('Please calculate ingredients first.'));\r\n        return;\r\n    }\r\n\r\n    // ensure the calculator is saved (so backend can read child table)\r\n    if (frm.is_dirty()) {\r\n        frm.save().then(() => call_create_se(frm));\r\n    } else {\r\n        call_create_se(frm);\r\n    }\r\n}\r\n\r\nfunction call_create_se(frm) {\r\n    frappe.call({\r\n        method: 'meal_manage.api.create_stock_entry_from_calculator',\r\n        args: {\r\n            calc_name: frm.doc.name,\r\n            from_warehouse: frm.doc.from_warehouse || null,\r\n            custom_issue: frm.doc.custom_bentery_name_ \r\n        },\r\n        callback: function(r) {\r\n            if (r.message) {\r\n                // open created Stock Entry\r\n                frappe.set_route('Form', 'Stock Entry', r.message);\r\n            } else {\r\n                frappe.msgprint(__('Could not create Stock Entry.'));\r\n            }\r\n        }\r\n    });\r\n}\r\n",
+  "view": "Form"
+ }
+]

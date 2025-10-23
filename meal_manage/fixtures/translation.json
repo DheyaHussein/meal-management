@@ -401,5 +401,44 @@
   "name": "rjfttbcics",
   "source_text": "Calculate Ingredients",
   "translated_text": "حساب الاستحقاق"
+ },
+ {
+  "context": null,
+  "contributed": 0,
+  "contribution_docname": null,
+  "contribution_status": "",
+  "docstatus": 0,
+  "doctype": "Translation",
+  "language": "ar",
+  "modified": "2025-10-21 00:55:44.551339",
+  "name": "j10cft0fbs",
+  "source_text": "Ingredients",
+  "translated_text": "مكونات الوجبة"
+ },
+ {
+  "context": null,
+  "contributed": 0,
+  "contribution_docname": null,
+  "contribution_status": "",
+  "docstatus": 0,
+  "doctype": "Translation",
+  "language": "ar",
+  "modified": "2025-10-21 00:57:50.780332",
+  "name": "gjpcrohjtn",
+  "source_text": "Qty per Person",
+  "translated_text": "استحقاق الفرد"
+ },
+ {
+  "context": null,
+  "contributed": 0,
+  "contribution_docname": null,
+  "contribution_status": "",
+  "docstatus": 0,
+  "doctype": "Translation",
+  "language": "ar",
+  "modified": "2025-10-21 00:58:51.654535",
+  "name": "sh95l90ifv",
+  "source_text": "Meal Management",
+  "translated_text": "ادارة الوجبات"
  }
 ]

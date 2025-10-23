@@ -1,7 +1,7 @@
 {
  "app": "frappe",
  "charts": [],
- "content": "[{\"id\":\"qEaFTR5mIW\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Meal Management </span>\",\"col\":12}},{\"id\":\"20QMHKUqmv\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Meal Production Calculator\",\"col\":3}}]",
+ "content": "[{\"id\":\"qEaFTR5mIW\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Meal Management </span>\",\"col\":12}},{\"id\":\"20QMHKUqmv\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Meal Production Calculator\",\"col\":3}},{\"id\":\"YBWyxhhitt\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Meal Recipe\",\"col\":3}}]",
  "creation": "2025-08-17 03:09:34.156113",
  "custom_blocks": [],
  "docstatus": 0,
@@ -15,7 +15,7 @@
  "label": "Meal Management ",
  "link_type": "DocType",
  "links": [],
- "modified": "2025-09-11 05:28:17.469386",
+ "modified": "2025-10-21 00:53:54.040770",
  "modified_by": "Administrator",
  "module": "Meal Management",
  "name": "Meal Management ",
@@ -32,6 +32,14 @@
    "doc_view": "List",
    "label": "Meal Production Calculator",
    "link_to": "Meal Production Calculator",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "List",
+   "label": "Meal Recipe",
+   "link_to": "Meal Recipe",
    "stats_filter": "[]",
    "type": "DocType"
   }
