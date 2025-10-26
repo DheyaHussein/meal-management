@@ -72,25 +72,26 @@ def calculate_ingredients_for_meal(meal_name, people=1, num_of_meals=1):
            for 3 days and people is 10 so we should multiply by 3*10* qty_per_person
            """
         # 
-        qty = (ing.qty_per_person or 0) * int(people) * int(num_of_meals)
-        print(num_of_meals)
-        qty = float(qty/ing.convert_uom)
-        print(qty)
+        qty = (ing.qty_per_person) * int(people) * int(num_of_meals)
+        # print(num_of_meals)
+        
+        qty = float(qty/ing.convert_uom )
+        # print(qty)
         key = ing.item_code
         # We should deivide by the conversion factor to get stock UOM qty
         # for example if the uom is "كيس*40"  so we divide by 40000 to cunvert from grams to bags
         # we should check if the uom and make the conversion without using the conversion factor from item master
         # we can add a list of known uoms that need conversion
         #     qty = qty / float(ing.uom.split("*")[-1])
-        known_uoms = {"كيس*40": 40000, "كيس*50": 50, "راس": 10}
+        # known_uoms = {"كيس*40": 40000, "كيس*50": 50, "راس": 10}
 
         
         # if ing.item_code in items:
         #     qty = qty / 1000  # convert grams to kilos for these items only
 
-        if ing.uom in known_uoms:
-            qty = float(qty / known_uoms[ing.uom])
-            print(qty)
+        # if ing.uom in known_uoms:
+        #     qty = float(qty / known_uoms[ing.uom])
+        #     print(qty)
         if key in summary:
             summary[key]["qty"] += qty
         else:
@@ -222,7 +223,7 @@ def create_stock_entry_from_calculator(calc_name, from_warehouse=None, custom_is
     se.stock_entry_type = "Material Issue"
     # se.naming_series = "MAT-ISS-.YYYY.-"
     se.custom_issue_to = custom_issue or None
-    print(custom_issue)
+    # print(custom_issue)
     se.company = company
     se.set_posting_time = 1
 
