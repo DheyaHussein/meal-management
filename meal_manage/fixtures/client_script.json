@@ -48,10 +48,10 @@
   "doctype": "Client Script",
   "dt": "Stock Entry",
   "enabled": 1,
-  "modified": "2025-08-13 05:47:40.766784",
+  "modified": "2025-10-29 05:35:03.068875",
   "module": "Custome App",
   "name": "Quantity in Words",
-  "script": "frappe.ui.form.on(\"Stock Entry\", {\r\n    validate: function(frm) {\r\n        frm.doc.items.forEach(function(row) {\r\n            if (row.qty) {\r\n                let qty = parseFloat(row.qty); // Ensure number, handle decimal\r\n                if (!isNaN(qty)) {\r\n                    frappe.call({\r\n                        method: \"custome_app.utils.convert_number_to_words\",\r\n                        args: {\r\n                            number: qty,  // This will now handle 7.5 correctly\r\n                            lang: \"ar\"\r\n                        },\r\n                        callback: function(response) {\r\n                            frappe.model.set_value(row.doctype, row.name, \"qty_in_words\", response.message);\r\n                        }\r\n                    });\r\n                }\r\n            }\r\n        });\r\n    }\r\n});\r\n",
+  "script": "frappe.ui.form.on(\"Stock Entry\", {\r\n    validate: function(frm) {\r\n        frm.doc.items.forEach(function(row) {\r\n            if (row.qty) {\r\n                let qty = parseFloat(row.qty); // Ensure number, handle decimal\r\n                if (!isNaN(qty)) {\r\n                    frappe.call({\r\n                        method: \"custome_app.utils.convert_number_to_words\",\r\n                        args: {\r\n                            number: qty,  // This will now handle 7.5 correctly\r\n                            lang: \"ar\"\r\n                        },\r\n                        callback: function(response) {\r\n                            frappe.model.set_value(row.doctype, row.name, \"qty_in_words\", response.message || \" \");\r\n                        }\r\n                    });\r\n                }\r\n            }\r\n        });\r\n    }\r\n});\r\n",
   "view": "Form"
  },
  {

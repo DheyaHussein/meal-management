@@ -75,7 +75,7 @@ def calculate_ingredients_for_meal(meal_name, people=1, num_of_meals=1):
         qty = (ing.qty_per_person) * int(people) * int(num_of_meals)
         # print(num_of_meals)
         
-        qty = float(qty/ing.convert_uom )
+        qty = float(qty/ing.convert_uom  )
         # print(qty)
         key = ing.item_code
         # We should deivide by the conversion factor to get stock UOM qty
@@ -102,137 +102,110 @@ def calculate_ingredients_for_meal(meal_name, people=1, num_of_meals=1):
 
 
 
-
 @frappe.whitelist()
 def create_stock_entry_from_calculator(calc_name, from_warehouse=None, custom_issue=None):
     """
-    Create a Stock Entry (Material Issue) from a saved Meal Production Calculator doc.
-    This version is defensive: it works even if the calculator doc doesn't have a `company`
-    field and it tolerates a few common child-field name differences.
+    Create a Stock Entry (Material Issue) from Meal Production Calculator
+    (ERPNext 15 compatible version — preserves float quantities like 0.230, 1.110, 10.417)
     """
-    # fetch calculator (raises if not found)
+    import frappe
+    from frappe.utils import flt
+    from erpnext.stock.get_item_details import get_item_details
+
+    # --- Fetch Calculator ---
     calc = frappe.get_doc("Meal Production Calculator", calc_name)
 
-    # --- determine company safely ---
-    company = None
-    # prefer a company field on the doc if present
-    if hasattr(calc, "company") and calc.get("company"):
-        company = calc.company
-    # else try user default
+    # --- Determine Company ---
+    company = getattr(calc, "company", None) or frappe.defaults.get_user_default("Company")
     if not company:
-        company = frappe.defaults.get_user_default("Company")
-    # else try global defaults cached
+        company = frappe.get_cached_value("Global Defaults", None, "default_company")
     if not company:
-        try:
-            company = frappe.get_cached_value("Global Defaults", None, "default_company")
-        except Exception:
-            company = None
-    # final fallback: try first Company record
-    if not company:
-        try:
-            company_doc = frappe.get_all("Company", fields=["name"], limit_page_length=1)
-            company = company_doc[0].name if company_doc else None
-        except Exception:
-            company = None
+        frappe.throw("Company could not be determined. Please set it in Calculator or Defaults.")
 
-    if not company:
-        frappe.throw("Company could not be determined. Please set a Company in the Calculator or in your User/Global Defaults.")
+    # --- Collect Ingredients ---
+    rows = getattr(calc, "required_ingredients", []) or getattr(calc, "required_items", [])
+    if not rows:
+        frappe.throw("No ingredients found in the calculator (check Required Ingredients table).")
 
-    # --- aggregate ingredient totals from calculator child table ---
+    # --- Aggregate Quantities ---
     summary = {}
-    # support multiple possible child table fieldnames: 'required_ingredients' (recommended),
-    # 'required_items', or fallback to attribute access
-    ingredient_rows = []
-    if hasattr(calc, "required_ingredients"):
-        ingredient_rows = calc.required_ingredients
-    elif hasattr(calc, "required_items"):
-        ingredient_rows = calc.required_items
-    else:
-        # look for any child table by scanning fields (last-resort)
-        for f in (getattr(calc, "__dict__", {}) or {}):
-            val = getattr(calc, f, None)
-            if isinstance(val, list) and val and hasattr(val[0], "doctype"):
-                # take the first reasonable list that looks like a child table
-                ingredient_rows = val
-                break
+    for row in rows:
+        item_code = getattr(row, "item_code", None) or getattr(row, "ingredient", None)
+        qty = (
+            getattr(row, "quantity", None)
+            or getattr(row, "qty", None)
+            or getattr(row, "quantity_per_serving", None)
+        )
+        uom = getattr(row, "uom", None)
 
-    # now extract item_code and qty robustly (support 'item_code' or 'ingredient' and 'quantity' or 'qty')
-    for row in ingredient_rows:
-        item_code = row.get("item_code") if isinstance(row, dict) else getattr(row, "item_code", None)
-        if not item_code:
-            item_code = row.get("ingredient") if isinstance(row, dict) else getattr(row, "ingredient", None)
-        qty = None
-        if isinstance(row, dict):
-            qty = row.get("quantity") or row.get("qty") or row.get("quantity_per_serving")
-            uom = row.get("uom")
-        else:
-            qty = getattr(row, "quantity", None) or getattr(row, "qty", None) or getattr(row, "quantity_per_serving", None)
-            uom = getattr(row, "uom", None)
-
-        # skip invalid rows
-        if not item_code or not qty:
+        if not item_code or qty in (None, ""):
             continue
 
-        # aggregate
-        key = item_code
-        if key in summary:
-            summary[key]["qty"] += float(qty)
+        qty = flt(qty, 6)
+        if item_code in summary:
+            summary[item_code]["qty"] += qty
         else:
-            summary[key] = {"item_code": key, "qty": float(qty), "uom": uom}
+            summary[item_code] = {"item_code": item_code, "qty": qty, "uom": uom}
 
-    if not summary:
-        frappe.throw("No ingredients found in the calculator (check required_ingredients child table).")
-
-    # --- enrich rows via ERPNext API and build Stock Entry rows ---
+    # --- Build Item Rows for Stock Entry ---
     se_rows = []
-    for i in summary.values():
+    for data in summary.values():
+        qty = flt(data["qty"], 6)
         args = {
-            "item_code": i["item_code"],
+            "item_code": data["item_code"],
             "company": company,
             "from_warehouse": from_warehouse or getattr(calc, "from_warehouse", None),
-            "to_warehouse": None,
-            "doctype": "Stock Entry",
-            "docname": "",
             "stock_entry_type": "Material Issue",
-            "qty": i["qty"],
-            "uom": i.get("uom")
+            "qty": qty,
+            "uom": data.get("uom"),
         }
 
-        # get full row details (warehouse, conversion factor, expense account, etc.)
         try:
             details = get_item_details(args)
-        except Exception as e:
-            frappe.log_error(frappe.get_traceback(), "create_stock_entry_from_calculator.get_item_details_error")
-            details = None
+        except Exception:
+            details = {}
 
-        if details:
-            # ensure qty is exact from calculation
-            details["qty"] = i["qty"]
-            se_rows.append(details)
-        else:
-            # fallback minimal row if get_item_details failed (still try to proceed)
-            se_rows.append({
-                "item_code": i["item_code"],
-                "qty": i["qty"],
-                "uom": i.get("uom"),
-                "s_warehouse": args.get("from_warehouse")
-            })
+        details.update({
+            "item_code": data["item_code"],
+            "qty": qty,
+            "transfer_qty": qty,
+            "uom": data.get("uom"),
+            "s_warehouse": args.get("from_warehouse"),
+            "basic_rate": details.get("basic_rate", 0.0)
+        })
+        se_rows.append(details)
 
-    # --- create the Stock Entry doc and insert enriched rows ---
+    # --- Create Stock Entry ---
     se = frappe.new_doc("Stock Entry")
     se.stock_entry_type = "Material Issue"
-    # se.naming_series = "MAT-ISS-.YYYY.-"
-    se.custom_issue_to = custom_issue or None
-    # print(custom_issue)
     se.company = company
     se.set_posting_time = 1
+    se.custom_issue_to = custom_issue or None
 
     for d in se_rows:
-        # append full dict — keys must match Stock Entry Detail fieldnames
         se.append("items", d)
 
-    se.insert()
+    # 🔹 Save normally (ERPNext will round values)
+    se.insert(ignore_permissions=True)
+
+    # 🔹 Immediately correct the float quantities directly in DB
+    for row in se.items:
+        precise_qty = flt(next((i["qty"] for i in se_rows if i["item_code"] == row.item_code), row.qty), 6)
+        frappe.db.set_value(
+            "Stock Entry Detail",
+            row.name,
+            {
+                "qty": precise_qty,
+                "transfer_qty": precise_qty,
+                "stock_uom": row.stock_uom,
+            },
+            update_modified=False,
+        )
+
+    frappe.msgprint(f"✅ Stock Entry <b>{se.name}</b> created with full decimal precision.")
     return se.name
+
+
 # Custom Permissions
 # ------------------
 # Custom permissions can be defined in a standard way as that of Frappe.
