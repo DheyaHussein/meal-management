@@ -185,7 +185,7 @@ def create_stock_entry_from_calculator(calc_name, from_warehouse=None, custom_is
     for d in se_rows:
         se.append("items", d)
 
-    # 🔹 Save normally (ERPNext will round values)
+    # 🔹 Save normally (ERPNext will round values) this best way
     se.insert(ignore_permissions=True)
 
     # 🔹 Immediately correct the float quantities directly in DB
