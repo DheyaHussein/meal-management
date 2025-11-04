@@ -209,4 +209,15 @@ def create_stock_entry_from_calculator(calc_name, from_warehouse=None, custom_is
 # Custom Permissions
 # ------------------
 # Custom permissions can be defined in a standard way as that of Frappe.
-# For example, to restrict Event to be visible only to Event Owners:    
+# For example, to restrict Event to be visible only to Event Owners:  
+from num2words import num2words
+
+@frappe.whitelist()
+def convert_number_to_words(number, lang="en"):
+    try:
+        number = int(number)
+        if lang == "ar":
+            return num2words(number, lang="ar") or " "
+        return num2words(number, lang="en") or " "
+    except Exception as e:
+        return str(e)  
